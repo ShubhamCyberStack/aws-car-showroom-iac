@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DriveSync | Luxury Car Showroom</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #0f0f0f; color: white; margin: 0; }
+        header { background: #1a1a1a; padding: 20px 5%; display: flex; justify-content: space-between; border-bottom: 3px solid #e74c3c; position: sticky; top: 0; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; padding: 40px 5%; }
+        .card { background: #181818; border-radius: 12px; overflow: hidden; border: 1px solid #333; transition: 0.3s; }
+        .card:hover { transform: translateY(-10px); border-color: #e74c3c; }
+        .card img { width: 100%; height: 200px; object-fit: cover; }
+        .info { padding: 20px; text-align: center; }
+        button { background: #e74c3c; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
+        #notif { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #27ae60; padding: 15px 30px; border-radius: 8px; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        #cart { display: none; position: fixed; right: 0; top: 0; width: 350px; height: 100%; background: #1a1a1a; padding: 20px; border-left: 2px solid #333; z-index: 500; }
+        input { width: 90%; padding: 10px; margin: 10px 0; background: #222; border: 1px solid #444; color: white; }
+    </style>
+</head>
+<body>
+    <div id="notif">🏎️ Your order was placed! Your car arrives soon.</div>
+    <header>
+        <h1>DriveSync Showroom</h1>
+        <button onclick="toggleCart()" style="width: auto;">🛒 Cart (<span id="count">0</span>)</button>
+    </header>
+
+    <div class="grid" id="grid"></div>
+
+    <div id="cart">
+        <h2>Your Selection</h2>
+        <div id="items"></div>
+        <hr>
+        <div id="checkoutForm" style="display:none">
+            <input type="text" id="addr" placeholder="Enter Delivery Address">
+            <button onclick="place()">Confirm Order</button>
+        </div>
+        <button id="checkBtn" onclick="document.getElementById('checkoutForm').style.display='block'">Checkout</button>
+        <button onclick="toggleCart()" style="background:#444; margin-top:10px;">Close</button>
+    </div>
+
+    <script>
+        let cart = [];
+        async function load() {
+            const res = await fetch('/api/cars');
+            const cars = await res.json();
+            document.getElementById('grid').innerHTML = cars.map(c => `
+                <div class="card">
+                    <img src="${c.image_url}">
+                    <div class="info">
+                        <h3>${c.brand} ${c.model}</h3>
+                        <p style="color:#e74c3c; font-size:1.2rem;">$${c.price.toLocaleString()}</p>
+                        <button onclick="add('${c.brand} ${c.model}', ${c.price})">Add to Cart</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        function add(n, p) { cart.push({n, p}); update(); }
+        function update() {
+            document.getElementById('count').innerText = cart.length;
+            document.getElementById('items').innerHTML = cart.map(i => `<p>${i.n} - $${i.p.toLocaleString()}</p>`).join('');
+        }
+        function toggleCart() { const m = document.getElementById('cart'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; }
+        function place() {
+            if(!document.getElementById('addr').value) return alert("Address Required!");
+            document.getElementById('notif').style.display = 'block';
+            cart = []; update(); toggleCart();
+            setTimeout(() => document.getElementById('notif').style.display = 'none', 4000);
+        }
+        load();
+    </script>
+</body>
+</html>
